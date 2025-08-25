@@ -1,0 +1,87 @@
+<!-- Botón flotante accesible y semántico -->
+@if (!isOpen) {
+<button class="chat-fab" (click)="toggleChat()" aria-label="Abrir chat" type="button">
+  <span class="fab-icon" aria-hidden="true">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" focusable="false">
+      <path fill-rule="evenodd" clip-rule="evenodd"
+        d="M8.07692 21.6983C3.61616 21.6983 0 18.0558 0 13.5626C0 13.4857 0.00105867 13.4091 0.00316212 13.3327C0.00239869 13.3218 0.00191532 13.3107 0.00171928 13.2996C-0.00267707 13.0501 0.00274548 12.8456 0.00274548 12.8456C0.00274548 7.45894 3.91485 3.07113 9.03328 2.25712C9.38633 2.20098 9.69506 2.48414 9.69506 2.84416V5.42686H15.9231C20.3838 5.42686 24 9.06934 24 13.5626C24 18.0558 20.3838 21.6983 15.9231 21.6983H8.07692ZM15.2308 11.4706C15.9955 11.4706 16.6154 12.0951 16.6154 12.8653V14.26C16.6154 15.0303 15.9955 15.6547 15.2308 15.6547C14.4661 15.6547 13.8462 15.0303 13.8462 14.26V12.8653C13.8462 12.0951 14.4661 11.4706 15.2308 11.4706ZM10.1538 12.8653C10.1538 12.0951 9.53394 11.4706 8.76923 11.4706C8.00453 11.4706 7.38462 12.0951 7.38462 12.8653V14.26C7.38462 15.0303 8.00453 15.6547 8.76923 15.6547C9.53394 15.6547 10.1538 15.0303 10.1538 14.26V12.8653Z">
+      </path>
+    </svg>
+  </span>
+  <span class="chat-fab-label">Asistente</span>
+</button>
+}
+
+<!-- Widget flotante accesible y semántico -->
+<section class="widget" [class.maximized]="maximized" [class.widget-open]="isOpen" [class.widget-closed]="!isOpen"
+  aria-label="Chatbot IA" role="dialog" aria-modal="true">
+  <header class="header">
+    <span class="header-info">
+      <span class="avatar" aria-label="Bot Avatar">
+        <img src="assets/avatar.gif" alt="Avatar del asistente" loading="lazy" width="32" height="32" />
+      </span>
+      <span class="header-title">Asistente</span>
+      <span class="header-beta" aria-label="Versión beta">Beta</span>
+    </span>
+    <span class="header-actions">
+      <!-- Minimizar -->
+      <button type="button" class="header-btn" (click)="toggleChat()" aria-label="Minimizar chat">
+        <svg xmlns="http://www.w3.org/2000/svg" class="bi bi-dash-lg" viewBox="0 0 16 16" focusable="false">
+          <path fill-rule="evenodd" d="M2 8a.5.5 0 0 1 .5-.5h11a.5.5 0 0 1 0 1h-11A.5.5 0 0 1 2 8" />
+        </svg>
+      </button>
+      <!-- Maximizar/Contraer -->
+      @if (!maximized) {
+      <button type="button" class="header-btn" (click)="toggleMaximize()" aria-label="Maximizar chat">
+        <svg xmlns="http://www.w3.org/2000/svg" class="bi bi-arrows-angle-expand" viewBox="0 0 16 16" focusable="false">
+          <path fill-rule="evenodd"
+            d="M5.828 10.172a.5.5 0 0 0-.707 0l-4.096 4.096V11.5a.5.5 0 0 0-1 0v3.975a.5.5 0 0 0 .5.5H4.5a.5.5 0 0 0 0-1H1.732l4.096-4.096a.5.5 0 0 0 0-.707m4.344-4.344a.5.5 0 0 0 .707 0l4.096-4.096V4.5a.5.5 0 1 0 1 0V.525a.5.5 0 0 0-.5-.5H11.5a.5.5 0 0 0 0 1h2.768l-4.096 4.096a.5.5 0 0 0 0 .707" />
+        </svg>
+      </button>
+      } @else {
+      <button type="button" class="header-btn" (click)="toggleMaximize()" aria-label="Contraer chat">
+        <svg xmlns="http://www.w3.org/2000/svg" class="bi bi-arrows-angle-contract" viewBox="0 0 16 16"
+          focusable="false">
+          <path fill-rule="evenodd"
+            d="M.172 15.828a.5.5 0 0 0 .707 0l4.096-4.096V14.5a.5.5 0 1 0 1 0v-3.975a.5.5 0 0 0-.5-.5H1.5a.5.5 0 0 0 0 1h2.768L.172 15.121a.5.5 0 0 0 0 .707M15.828.172a.5.5 0 0 0-.707 0l-4.096 4.096V1.5a.5.5 0 1 0-1 0v3.975a.5.5 0 0 0 .5.5H14.5a.5.5 0 0 0 0-1h-2.768L15.828.879a.5.5 0 0 0 0-.707" />
+        </svg>
+      </button>
+      }
+    </span>
+  </header>
+  <main class="messages" #messagesContainer tabindex="0" aria-live="polite">
+    <div class="notice">
+      Este asistente usa inteligencia artificial para responderte
+    </div>
+    <div class="date-sep">Hoy</div>
+    @for (m of messages; track m) {
+    <div class="msg" [ngClass]="m.role">
+      @if (m.html) {
+      <span [innerHTML]="m.text"></span>
+      } @else {
+      <span>{{m.text}}</span>
+      }
+      <span class="msg-time">{{ m.time }}</span>
+    </div>
+    }
+    @if (loading) {
+    <div class="msg bot">
+      <span class="loader-dots" aria-label="Cargando respuesta">
+        <span></span><span></span><span></span>
+      </span>
+    </div>
+    }
+  </main>
+  <form [formGroup]="chatForm" class="input" autocomplete="off" (ngSubmit)="sendMessage()">
+    <input #chatInput type="text" formControlName="draft" placeholder="Envía un mensaje..." autocomplete="off"
+      aria-label="Escribe tu mensaje" />
+    @if (chatForm.get('draft')?.value?.trim()?.length > 0 && !loading) {
+    <button class="send" aria-label="Enviar" type="submit">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" focusable="false">
+        <path
+          d="M3.478 2.404a.75.75 0 0 0-.926.941l2.432 7.905H13.5a.75.75 0 0 1 0 1.5H4.984l-2.432 7.905a.75.75 0 0 0 .926.94 60.519 60.519 0 0 0 18.445-8.986.75.75 0 0 0 0-1.218A60.517 60.517 0 0 0 3.478 2.404Z" />
+      </svg>
+    </button>
+    }
+  </form>
+</section>

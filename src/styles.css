@@ -1,0 +1,86 @@
+/* ==========================
+   Variables globales
+   ========================== */
+:root {
+  /* Colores */
+  --color-primary: #2584f8;
+  --color-primary-hover: #2968c8;
+  --color-bg: #fff;
+  --color-bg-alt: #f3f3f3;
+  --color-user: #e6f0ff;
+  --color-header: #fff;
+  --color-border: #e5e7eb;
+  --color-notice-bg: #fff7d6;
+  --color-notice-text: #7c5c00;
+  --color-date-bg: #e5e5e5;
+  --color-date-text: #737373;
+
+  /* Tipografía */
+  --font-family: 'Proxima Nova', -apple-system, Roboto, Arial, sans-serif;
+  --font-size-base: 1rem; /* 15-16px */
+  --font-size-title: 1.1rem;
+  --font-size-small: 0.75rem;
+  --font-size-label: 1rem;
+
+  /* Espaciado */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 12px;
+  --space-lg: 16px;
+  --space-xl: 24px;
+
+  /* Bordes y radios */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 28px;
+
+  /* Sombra */
+  --shadow-widget: 0 6px 32px rgba(0, 0, 0, .12);
+  --shadow-btn: 0 2px 8px rgba(0, 0, 0, 0.18);
+  --shadow-msg: 0 1px 4px rgba(0, 0, 0, 0.06);
+  --shadow-notice: 0 1px 2px 0 rgba(0, 0, 0, .12);
+  --shadow-date: 0 1px 2px 0 rgba(0, 0, 0, 0.12);
+
+  /* Widget */
+  --widget-width: 18.1rem; /* 290px */
+  --widget-height: 25rem; /* 400px */
+  --widget-max-height: 56.25rem; /* 900px */
+  --widget-maximized-height: 80vh;
+
+  /* Chat FAB */
+  --fab-size: 3rem; /* 48px */
+  --fab-label-width: 8.438rem; /* 135px */
+  --fab-label-font-size: 1rem;
+  --fab-label-gap: 8px; /* Espacio entre ícono y texto en hover */
+  --color-fab-label: var(--color-bg);
+
+  /* Header Button */
+  --color-header-btn-bg: transparent;
+  --color-header-btn-border: none;
+  --color-header-btn-icon: var(--color-date-text);
+  --color-header-btn-icon-hover: var(--color-primary-hover);
+  --header-btn-icon-size: var(--font-size-base);
+  --header-btn-margin-x: var(--space-xs);
+
+  /* Input */
+  --color-input-bg: #f7f8fa;
+  --color-input-text: #222;
+
+}
+
+/* ==========================
+   Aplicar variables globales
+   ========================== */
+body {
+  font-family: var(--font-family);
+  font-size: var(--font-size-base);
+  background: var(--color-bg-alt);
+}
+
+input[type="text"] {
+  font-family: var(--font-family);
+  font-size: var(--font-size-base);
+}
+
+/* ...resto de estilos... */

@@ -1,0 +1,420 @@
+/* ==========================
+   Estructura principal
+   ========================== */
+
+.widget {
+  position: fixed;
+  right: var(--space-xl);
+  bottom: var(--space-xl);
+  width: var(--widget-width);
+  height: var(--widget-height);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-widget);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  background: var(--color-bg);
+  font-size: var(--font-size-base);
+  transition: opacity 0.3s cubic-bezier(.4, 0, .2, 1), transform 0.3s cubic-bezier(.4, 0, .2, 1), height 0.2s;
+  opacity: 0;
+  transform: translateY(40px);
+  pointer-events: none;
+}
+
+.widget.maximized {
+  height: var(--widget-maximized-height);
+  max-height: var(--widget-max-height);
+}
+
+.widget-open {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.widget-closed {
+  opacity: 0;
+  transform: translateY(40px);
+  pointer-events: none;
+}
+
+/* ==========================
+   Header
+   ========================== */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-md) var(--space-lg);
+  background: var(--color-header);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.header-info {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.header-title {
+  font-weight: 600;
+  font-size: var(--font-size-title);
+}
+
+.header-beta {
+  font-size: var(--font-size-small);
+  color: var(--color-date-text);
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.header-btn {
+  background: var(--color-header-btn-bg);
+  border: var(--color-header-btn-border);
+  padding: 0;
+  margin: 0 var(--header-btn-margin-x);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: none;
+  outline: none;
+}
+
+.header-btn svg {
+  width: var(--header-btn-icon-size);
+  height: var(--header-btn-icon-size);
+  fill: var(--color-header-btn-icon);
+  transition: fill 0.2s;
+}
+
+.header-btn:hover svg,
+.header-btn:focus svg {
+  fill: var(--color-header-btn-icon-hover);
+}
+
+/* ==========================
+   Mensajes
+   ========================== */
+.messages {
+  flex: 1;
+  padding: var(--space-lg) var(--space-md) var(--space-md) var(--space-md);
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  background: var(--color-bg-alt);
+  scroll-behavior: smooth;
+}
+
+.msg {
+  max-width: 80%;
+  margin: var(--space-xs) 0;
+  padding: var(--space-sm) var(--space-lg);
+  font-size: var(--font-size-base);
+  line-height: 1.125rem;
+  position: relative;
+  word-break: break-word;
+  background: var(--color-bg);
+  border-radius: var(--radius-md) var(--radius-md) var(--radius-md) 0;
+  box-shadow: var(--shadow-msg);
+}
+
+.msg.user {
+  background: var(--color-user);
+  align-self: flex-end;
+  border-radius: var(--radius-md) 0 var(--radius-md) var(--radius-md);
+  margin-right: var(--space-xs);
+}
+
+.msg.bot {
+  background: var(--color-bg);
+  align-self: flex-start;
+  border-radius: 0 var(--radius-md) var(--radius-md) var(--radius-md);
+  margin-left: var(--space-xs);
+  /* Fade-in para mensajes del bot */
+  animation: fadeInMsg 0.6s;
+}
+
+@keyframes fadeInMsg {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Picos de burbuja */
+.msg.user::after {
+  content: "";
+  position: absolute;
+  right: -8px;
+  top: 0;
+  width: 0;
+  height: 0;
+  border-top: 12px solid var(--color-user);
+  border-left: 12px solid transparent;
+  transform: rotate(-90deg);
+}
+
+.msg.bot::after {
+  content: "";
+  position: absolute;
+  left: -10px;
+  top: 0;
+  width: 0;
+  height: 0;
+  border-top: 12px solid var(--color-bg);
+  border-right: 12px solid transparent;
+  transform: rotate(90deg);
+}
+
+/* Hora del mensaje */
+.msg-time {
+  display: block;
+  font-size: var(--font-size-small);
+  color: var(--color-date-text);
+  text-align: right;
+  margin-top: var(--space-xs);
+  opacity: 0.7;
+}
+
+/* ==========================
+   Input y botones
+   ========================== */
+.input {
+  display: flex;
+  gap: var(--space-sm);
+  padding: var(--space-md) var(--space-md);
+  border-top: 1px solid var(--color-border);
+  background: var(--color-bg);
+}
+
+input[type=text] {
+  flex: 1;
+  padding: var(--space-sm) var(--space-lg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  color: var(--color-input-text);
+  background: var(--color-input-bg);
+  font-family: var(--font-family);
+  font-size: var(--font-size-base);
+}
+
+button {
+  padding: var(--space-sm) var(--space-lg);
+  border: none;
+  border-radius: var(--radius-xl);
+  background: var(--color-primary);
+  color: var(--color-bg);
+  cursor: pointer;
+  font-weight: 500;
+  font-size: var(--font-size-base);
+  transition: background 0.2s;
+}
+
+button.send svg {
+  fill: var(--color-bg);
+  width: 0.875rem;
+  height: 0.875rem;
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+button.send:hover {
+  background: var(--color-primary-hover);
+}
+
+input:focus,
+button:focus {
+  outline: none;
+  box-shadow: none;
+}
+
+/* ==========================
+   Botón flotante chat
+   ========================== */
+.chat-fab {
+  position: fixed;
+  bottom: var(--space-xl);
+  right: var(--space-xl);
+  width: var(--fab-size);
+  height: var(--fab-size);
+  border-radius: var(--radius-xl);
+  background: var(--color-primary);
+  box-shadow: var(--shadow-btn);
+  border: none;
+  cursor: pointer;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: width 0.2s cubic-bezier(.4, 0, .2, 1), background 0.2s;
+  overflow: hidden;
+  padding: 0;
+}
+
+.chat-fab svg {
+  fill: var(--color-bg);
+  height: 1.5rem;
+  z-index: 1;
+  transition: margin 0.2s;
+  display: block;
+}
+
+.chat-fab-label {
+  position: relative;
+  margin-left: var(--fab-label-gap);
+  color: var(--color-fab-label);
+  font-weight: 600;
+  font-size: var(--fab-label-font-size);
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s;
+  align-self: center;
+}
+
+.chat-fab:hover {
+  width: var(--fab-label-width);
+  /* background: var(--color-primary-hover); */
+  justify-content: flex-start;
+  padding: 0 var(--space-md);
+}
+
+.chat-fab:hover .chat-fab-label {
+  opacity: 1;
+  pointer-events: auto;
+  margin-left: var(--fab-label-gap);
+}
+
+/* Mostrar solo el icono cuando no hay hover */
+.chat-fab .chat-fab-label {
+  display: none;
+}
+
+.chat-fab:hover .chat-fab-label {
+  display: inline;
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* ==========================
+   Loader dots
+   ========================== */
+.loader-dots {
+  display: inline-flex;
+  align-items: center;
+  height: 2rem;
+  gap: var(--space-xs);
+}
+
+.loader-dots span {
+  display: block;
+  width: 0.5rem;
+  height: 0.5rem;
+  background: var(--color-primary);
+  border-radius: 50%;
+  opacity: 0.6;
+  animation: loader-bounce 1s infinite;
+}
+
+.loader-dots span:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.loader-dots span:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes loader-bounce {
+
+  0%,
+  80%,
+  100% {
+    transform: scale(0.8);
+    opacity: 0.6;
+  }
+
+  40% {
+    transform: scale(1.3);
+    opacity: 1;
+  }
+}
+
+/* ==========================
+   Aviso superior
+   ========================== */
+.notice {
+  background: var(--color-notice-bg);
+  color: var(--color-notice-text);
+  padding: var(--space-sm);
+  border-radius: var(--radius-md);
+  margin: var(--space-sm);
+  font-size: var(--font-size-small);
+  box-shadow: var(--shadow-notice);
+  text-align: center;
+}
+
+/* ==========================
+   Avatar
+   ========================== */
+.avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.avatar img {
+  width: 1.5rem;
+  height: 1.5rem;
+  object-fit: cover;
+  display: block;
+}
+
+/* ==========================
+   Separador de fecha
+   ========================== */
+.date-sep {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: var(--space-md) 0 var(--space-sm) 0;
+  font-size: var(--font-size-small);
+  color: var(--color-date-text);
+  font-weight: 500;
+  background: var(--color-date-bg);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-date);
+  width: 3.125rem;
+  height: 1.5625rem;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* ==========================
+   Responsive
+   ========================== */
+@media (max-width: 400px) {
+  .widget {
+    width: 95vw;
+    right: 2vw;
+    bottom: 80px;
+    height: 90vh;
+  }
+
+  .chat-fab {
+    right: 2vw;
+    bottom: 16px;
+  }
+}
