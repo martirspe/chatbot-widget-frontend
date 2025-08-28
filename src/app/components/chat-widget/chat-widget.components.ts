@@ -39,7 +39,7 @@ export class ChatWidgetComponent {
         this.messages = [
           {
             role: 'bot',
-            text: '¡Hola! 👋 Soy tu asistente virtual <b>Marrsito</b>. ¿En qué puedo ayudarte hoy?',
+            text: '¡Hola! 😊 Soy <b>Lia</b>, tu asistente virtual. Cuéntame, ¿cómo puedo apoyarte hoy?',
             html: true,
             time: formatTime(new Date().toISOString())
           }
@@ -71,10 +71,15 @@ export class ChatWidgetComponent {
     this.loading = false;
 
     if (r.documents && Array.isArray(r.documents) && r.documents.length > 0) {
-      let docsHtml = r.documents.map((doc: any) =>
+      // Filtra documentos únicos por texto y fuente
+      const uniqueDocs = Array.from(
+        new Map(r.documents.map((doc: any) => [doc.text + doc.source, doc])).values()
+      );
+
+      let docsHtml = uniqueDocs.map((doc: any) =>
         `<div style="margin-bottom:8px;">
           <div style="font-weight:600; color:#1d4ed8;">${doc.title || doc.text?.slice(0, 40) || 'Documento'}</div>
-          <div style="color:#059669;">${doc.subtitle || doc.text?.slice(0, 60) || ''}</div>
+          <div style="color:#059669;">${doc.subtitle || ''}</div>
           <a href="${doc.source}" target="_blank" style="color:#2563eb; font-size:14px;">${doc.source}</a>
         </div>`
       ).join('');
