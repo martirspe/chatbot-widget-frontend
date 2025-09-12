@@ -21,6 +21,7 @@
   --font-size-title: 1.1rem;
   --font-size-small: 0.75rem;
   --font-size-label: 1rem;
+  --font-size-start: 1.75rem;
 
   /* Espaciado */
   --space-xs: 4px;
@@ -67,6 +68,9 @@
   --color-input-bg: #f7f8fa;
   --color-input-text: #222;
 
+  /* Estrellas */
+  --color-star-inactive: #bbb;    /* gris para estrellas no seleccionadas */
+  --color-star-active: #FFD700;   /* amarillo para estrellas seleccionadas */
 }
 
 /* ==========================

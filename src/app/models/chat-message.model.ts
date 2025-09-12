@@ -4,3 +4,11 @@ export interface ChatMessage {
   html?: boolean;
   time?: string;
 }
+
+export interface ChatResponse {
+  sessionId?: string;
+  reply?: string;
+  message?: string;
+  documents?: any[];
+  result?: any[];
+}
