@@ -1,90 +1,98 @@
-/* ==========================
-   Variables globales
-   ========================== */
+/* Variables globales */
 :root {
-  /* Colores */
-  --color-primary: #2584f8;
-  --color-primary-hover: #2968c8;
-  --color-bg: #fff;
-  --color-bg-alt: #f3f3f3;
-  --color-user: #e6f0ff;
-  --color-header: #fff;
-  --color-border: #e5e7eb;
-  --color-notice-bg: #fff7d6;
-  --color-notice-text: #7c5c00;
-  --color-date-bg: #e5e5e5;
-  --color-date-text: #737373;
+  /* Colores principales */
+  --cw-color-primary: #2584f8;
+  --cw-color-primary-hover: #2968c8;
+  --cw-color-bg: #fff;
+  --cw-color-bg-alt: #f3f3f3;
+  --cw-color-bot: #fff;
+  --cw-color-user: #dbeafe;
+  --cw-color-header: #fff;
+  --cw-color-border: #e5e7eb;
+
+  /* Colores secundarios y estados */
+  --cw-color-notice-bg: #fff2c4;
+  --cw-color-notice-text: #222;
+  --cw-color-date-bg: #e5e5e5;
+  --cw-color-message-text: #222;
+  --cw-color-date-text: #737373;
+  --cw-color-rating-title: #222;
+  --cw-color-input-bg: #fff;
+  --cw-color-input-text: #222;
+  --cw-color-fab-label: var(--cw-color-bg);
+
+  /* Colores de botones y rating */
+  --cw-color-header-btn-bg: transparent;
+  --cw-color-header-btn-border: none;
+  --cw-color-header-btn-icon: var(--cw-color-date-text);
+  --cw-color-header-btn-icon-hover: var(--cw-color-primary-hover);
+  --cw-color-star-inactive: #bbb;
+  --cw-color-star-active: #FFD700;
 
   /* Tipografía */
-  --font-family: 'Proxima Nova', -apple-system, Roboto, Arial, sans-serif;
-  --font-size-base: 1rem; /* 15-16px */
-  --font-size-title: 1.1rem;
-  --font-size-small: 0.75rem;
-  --font-size-label: 1rem;
-  --font-size-start: 1.75rem;
+  --cw-font-family: 'Proxima Nova', -apple-system, Roboto, Arial, sans-serif;
+  --cw-font-size-base: 16px;
+  --cw-font-size-title: 17px;
+  --cw-font-size-small: 12px;
+
+  /* Line-height */
+  --cw-line-height-base: 18px;
 
   /* Espaciado */
-  --space-xs: 4px;
-  --space-sm: 8px;
-  --space-md: 12px;
-  --space-lg: 16px;
-  --space-xl: 24px;
+  --cw-space-xs: 4px;
+  --cw-space-sm: 8px;
+  --cw-space-md: 12px;
+  --cw-space-lg: 16px;
+  --cw-space-xl: 24px;
 
-  /* Bordes y radios */
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
-  --radius-xl: 28px;
+  /* Bordes */
+  --cw-radius-sm: 8px;
+  --cw-radius-md: 12px;
+  --cw-radius-lg: 16px;
+  --cw-radius-xl: 28px;
 
-  /* Sombra */
-  --shadow-widget: 0 6px 32px rgba(0, 0, 0, .12);
-  --shadow-btn: 0 2px 8px rgba(0, 0, 0, 0.18);
-  --shadow-msg: 0 1px 4px rgba(0, 0, 0, 0.06);
-  --shadow-notice: 0 1px 2px 0 rgba(0, 0, 0, .12);
-  --shadow-date: 0 1px 2px 0 rgba(0, 0, 0, 0.12);
+  /* Sombras */
+  --cw-shadow-widget: 0 3px 11px rgba(0, 0, 0, 0.13);
+  --cw-shadow-btn: 0 1px 8px rgba(0, 0, 0, 0.18);
+  --cw-shadow-input: 0 1px 2px rgba(0, 0, 0, 0.07);
+  --cw-shadow-msg: 0 1px 2px rgba(0, 0, 0, 0.07);
+  --cw-shadow-date: 0 1px 2px rgba(0, 0, 0, 0.07);
+  --cw-shadow-notice: 0 1px 2px rgba(0, 0, 0, 0.07);
 
   /* Widget */
-  --widget-width: 18.1rem; /* 290px */
-  --widget-height: 25rem; /* 400px */
-  --widget-max-height: 56.25rem; /* 900px */
-  --widget-maximized-height: 80vh;
+  --cw-widget-width: 290px;
+  --cw-widget-height: 400px;
+  --cw-widget-max-height: 900px;
+  --cw-widget-maximized-height: 80vh;
 
-  /* Chat FAB */
-  --fab-size: 3rem; /* 48px */
-  --fab-label-width: 8.438rem; /* 135px */
-  --fab-label-font-size: 1rem;
-  --fab-label-gap: 8px; /* Espacio entre ícono y texto en hover */
-  --color-fab-label: var(--color-bg);
+  /* FAB */
+  --cw-fab-size: 48px;
+  --cw-fab-icon-size: 24px;
+  --cw-fab-label-width: 135px;
+  --cw-fab-label-font-size: 16px;
+  --cw-fab-label-gap: 8px;
 
   /* Header Button */
-  --color-header-btn-bg: transparent;
-  --color-header-btn-border: none;
-  --color-header-btn-icon: var(--color-date-text);
-  --color-header-btn-icon-hover: var(--color-primary-hover);
-  --header-btn-icon-size: var(--font-size-base);
-  --header-btn-margin-x: var(--space-xs);
+  --cw-header-btn-icon-size: 16px;
+  --cw-header-btn-margin-x: 4px;
 
-  /* Input */
-  --color-input-bg: #f7f8fa;
-  --color-input-text: #222;
+  /* Tamaños de elementos */
+  --cw-avatar-size: 20px;
+  --cw-send-icon-size: 14px;
+  --cw-star-icon-size: 20px;
+  --cw-loader-dot-size: 8px;
+  --cw-loader-dot-height: 32px;
+  --cw-date-sep-width: 50px;
+  --cw-date-sep-height: 25px;
 
-  /* Estrellas */
-  --color-star-inactive: #bbb;    /* gris para estrellas no seleccionadas */
-  --color-star-active: #FFD700;   /* amarillo para estrellas seleccionadas */
+  /* Promociones */
+  --cw-promo-title-color: #222;
+  --cw-promo-subtitle-color: #222;
+  --cw-promo-link-color: #2563eb;
+  --cw-promo-link-size: 14px;
 }
 
-/* ==========================
-   Aplicar variables globales
-   ========================== */
+/* Fondo global */
 body {
-  font-family: var(--font-family);
-  font-size: var(--font-size-base);
-  background: var(--color-bg-alt);
+  background: var(--cw-color-bg-alt);
 }
-
-input[type="text"] {
-  font-family: var(--font-family);
-  font-size: var(--font-size-base);
-}
-
-/* ...resto de estilos... */

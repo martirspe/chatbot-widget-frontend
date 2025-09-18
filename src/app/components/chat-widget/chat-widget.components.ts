@@ -1,17 +1,16 @@
-import { Component, ViewChild, ElementRef } from '@angular/core';
+import { Component, ViewChild, ElementRef, ViewEncapsulation } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { ChatService } from 'app/services/chat.service';
 import { ChatMessage } from 'app/models/chat-message.model';
-import { generateDocsHtml } from 'app/common/utils/chat-html.utils';
 import { formatTime } from 'app/common/utils/time.utils';
 
 @Component({
-  selector: 'app-chat-widget',
-  standalone: true,
+  selector: 'chat-widget',
   imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './chat-widget.component.html',
-  styleUrls: ['./chat-widget.component.css']
+  styleUrls: ['./chat-widget.component.css'],
+  encapsulation: ViewEncapsulation.ShadowDom
 })
 export class ChatWidgetComponent {
   @ViewChild('messagesContainer') messagesContainer!: ElementRef<HTMLDivElement>;
@@ -32,6 +31,7 @@ export class ChatWidgetComponent {
   stars = [1, 2, 3, 4, 5];
   private inactivityTimer: any;
   hasInteracted = false;
+  ratingSubmitted = false;
 
   constructor(private fb: FormBuilder, private chat: ChatService) {
     this.chatForm = this.fb.group({ draft: [''], comment: [''] });
@@ -41,12 +41,13 @@ export class ChatWidgetComponent {
     this.isOpen = !this.isOpen;
     this.messages = [];
     this.agentTransferCompleted = false;
+    this.showRating = false;
     this.chatForm.get('draft')?.enable();
     if (this.isOpen) {
       this.loading = true;
       setTimeout(() => {
         this.loading = false;
-        this.addBotMessage('¡Hola! 😊 Soy <b>Lia</b>, tu asistente virtual. Cuéntame, ¿cómo puedo apoyarte hoy?', true);
+        this.addBotMessage('¡Hola! 😊 Soy <b>Lia</b>, tu asistente virtual. Cuéntame, ¿cómo puedo ayudarte hoy?', true);
         this.focusInput();
       }, 1200);
     }
@@ -91,17 +92,8 @@ export class ChatWidgetComponent {
         this.scrollToBottom();
         return;
       }
-
       if (r.reply || r.message) {
         this.addBotMessage(r.reply ?? r.message ?? 'No se encontraron documentos.');
-      }
-
-      if (r.documents && Array.isArray(r.documents) && r.documents.length > 0) {
-        this.addBotMessage(generateDocsHtml(r.documents), true);
-        this.awaitingAgentKeyword = false;
-      } else if (r.result && Array.isArray(r.result) && r.result.length > 0) {
-        this.addBotMessage(generateDocsHtml(r.result), true);
-        this.awaitingAgentKeyword = false;
       }
       this.focusInput();
       this.scrollToBottom();
@@ -125,12 +117,12 @@ export class ChatWidgetComponent {
         return;
       }
       const promosHtml = promos.map(p =>
-        `<div style="margin-bottom:12px;">
-        <div style="font-weight:600; color:#1d4ed8;">${p.title}</div>
-        <div>${p.description}</div>
-        ${p.validUntil ? `<div style="font-size:12px; color:#666;">Válido hasta: ${p.validUntil}</div>` : ''}
-        ${p.url ? `<a href="${p.url}" target="_blank" style="color:#2563eb;">Ver promoción</a>` : ''}
-      </div>`
+        `<div class="cw-promo">
+          <div class="cw-promo-title">${p.title}</div>
+          <div class="cw-promo-subtitle">${p.description}</div>
+          ${p.validUntil ? `<div class="cw-promo-valid">Válido hasta: ${p.validUntil}</div>` : ''}
+          ${p.url ? `<a class="cw-promo-link" href="${p.url}" target="_blank">Ver promoción</a>` : ''}
+        </div>`
       ).join('');
       this.addBotMessage(promosHtml, true);
       this.scrollToBottom();
@@ -148,7 +140,13 @@ export class ChatWidgetComponent {
       this.chatForm.get('draft')?.disable();
       this.focusInput();
       this.scrollToBottom();
-      this.showRating = true;
+      if (!this.ratingSubmitted) {
+        // Mostrar la calificación después de 30 segundos
+        setTimeout(() => {
+          this.showRating = true;
+          this.scrollToBottom();
+        }, 15000); // 15 segundos
+      }
     });
   }
 
@@ -164,6 +162,7 @@ export class ChatWidgetComponent {
         this.showRating = false;
         this.userRating = 0;
         this.userComment = '';
+        this.ratingSubmitted = true;
       } else {
         this.addBotMessage('No se pudo registrar tu calificación. Intenta de nuevo.');
       }
@@ -175,7 +174,7 @@ export class ChatWidgetComponent {
     if (this.inactivityTimer) {
       clearTimeout(this.inactivityTimer);
     }
-    if (this.hasInteracted) {
+    if (this.hasInteracted && !this.ratingSubmitted) {
       this.inactivityTimer = setTimeout(() => {
         this.showRating = true;
         this.scrollToBottom();

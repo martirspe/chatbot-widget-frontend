@@ -4,7 +4,7 @@ import { ChatWidgetComponent } from './components/chat-widget/chat-widget.compon
 @Component({
   selector: 'app-root',
   imports: [ChatWidgetComponent],
-  template: `<div class="widget"><app-chat-widget/></div>`
+  template: `<div class="widget"><chat-widget/></div>`
 })
 
 export class App { }
