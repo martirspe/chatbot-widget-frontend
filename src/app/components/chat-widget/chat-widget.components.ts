@@ -47,7 +47,7 @@ export class ChatWidgetComponent {
       this.loading = true;
       setTimeout(() => {
         this.loading = false;
-        this.addBotMessage('¡Hola! 😊 Soy <b>Lia</b>, tu asistente virtual. Cuéntame, ¿cómo puedo ayudarte hoy?', true);
+        this.addBotMessage('¡Hola! 😊 Soy <b>Lia</b>, tu asistente. ¿Cómo puedo ayudarte?', true);
         this.focusInput();
       }, 1200);
     }
@@ -56,6 +56,11 @@ export class ChatWidgetComponent {
   sendMessage(): void {
     const text = this.chatForm.get('draft')?.value?.trim();
     if (!text || this.loading) return;
+
+    if (this.showRating) {
+      this.showRating = false;
+      this.resetInactivityTimer();
+    }
 
     this.addUserMessage(text);
     this.chatForm.reset();
@@ -93,7 +98,7 @@ export class ChatWidgetComponent {
         return;
       }
       if (r.reply || r.message) {
-        this.addBotMessage(r.reply ?? r.message ?? 'No se encontraron documentos.');
+        this.addBotMessage(r.reply ?? r.message ?? 'No tengo información relevante para tu consulta.');
       }
       this.focusInput();
       this.scrollToBottom();
@@ -141,19 +146,18 @@ export class ChatWidgetComponent {
       this.focusInput();
       this.scrollToBottom();
       if (!this.ratingSubmitted) {
-        // Mostrar la calificación después de 30 segundos
         setTimeout(() => {
           this.showRating = true;
           this.scrollToBottom();
-        }, 15000); // 15 segundos
+        }, 15000);
       }
     });
   }
 
   submitRating(): void {
-    if (this.userRating < 1) return;
+    if (!this.sessionId || this.userRating < 1) return;
     this.chat.rateChat({
-      sessionId: this.sessionId!,
+      sessionId: this.sessionId,
       rating: this.userRating,
       comment: this.userComment
     }).subscribe(res => {
@@ -178,7 +182,7 @@ export class ChatWidgetComponent {
       this.inactivityTimer = setTimeout(() => {
         this.showRating = true;
         this.scrollToBottom();
-      }, 60000); // 60 segundos
+      }, 90000); // 90 segundos
     }
   }
 
@@ -205,8 +209,7 @@ export class ChatWidgetComponent {
   private isFailedResponse(reply?: string): boolean {
     if (!reply) return false;
     const failedPhrases = [
-      'no se encontraron documentos',
-      'no se encontró información',
+      'no tengo información',
       'no tengo una respuesta',
       'no he podido resolver',
       'error de conexión'
