@@ -59,7 +59,7 @@
     @for (m of messages; track m) {
     <div class="cw-msg" [ngClass]="m.role">
       @if (m.html) {
-      <span [innerHTML]="m.text"></span>
+      <div [innerHTML]="m.text"></div>
       } @else {
       <span>{{m.text}}</span>
       }

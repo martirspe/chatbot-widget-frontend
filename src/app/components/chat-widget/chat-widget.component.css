@@ -210,6 +210,38 @@
   animation: cw-fadeInMsg 0.6s;
 }
 
+.cw-msg.bot p {
+  margin: var(--cw-space-xs) 0 var(--cw-space-xs) 0;
+}
+
+.cw-msg.bot ul,
+.cw-msg.bot ol {
+  margin: var(--cw-space-sm) 0 var(--cw-space-sm) var(--cw-space-md);
+  padding-left: var(--cw-space-lg);
+}
+
+.cw-msg.bot ul {
+  list-style-type: disc;
+}
+
+.cw-msg.bot ol {
+  list-style-type: decimal;
+}
+
+.cw-msg.bot li {
+  margin-bottom: var(--cw-space-xs);
+}
+
+.cw-msg.bot img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: var(--cw-space-sm) 0;
+  border-radius: var(--cw-radius-sm);
+  box-shadow: var(--cw-shadow-msg);
+  transition: box-shadow 0.2s;
+}
+
 @keyframes cw-fadeInMsg {
   from {
     opacity: 0;
@@ -229,20 +261,20 @@
   top: 0;
   width: 0;
   height: 0;
-  border-top: 12px solid var(--cw-color-user);
-  border-left: 12px solid transparent;
+  border-top: 10px solid var(--cw-color-user);
+  border-left: 10px solid transparent;
   transform: rotate(-90deg);
 }
 
 .cw-msg.bot::after {
   content: "";
   position: absolute;
-  left: -10px;
+  left: -8px;
   top: 0;
   width: 0;
   height: 0;
-  border-top: 12px solid var(--cw-color-bg);
-  border-right: 12px solid transparent;
+  border-top: 10px solid var(--cw-color-bg);
+  border-right: 10px solid transparent;
   transform: rotate(90deg);
 }
 

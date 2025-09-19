@@ -98,7 +98,8 @@ export class ChatWidgetComponent {
         return;
       }
       if (r.reply || r.message) {
-        this.addBotMessage(r.reply ?? r.message ?? 'No tengo información relevante para tu consulta.');
+        const isHtml = /<\/?[a-z][\s\S]*>/i.test(r.reply ?? r.message ?? '');
+        this.addBotMessage(r.reply ?? r.message ?? 'No tengo información relevante para tu consulta.', isHtml);
       }
       this.focusInput();
       this.scrollToBottom();
