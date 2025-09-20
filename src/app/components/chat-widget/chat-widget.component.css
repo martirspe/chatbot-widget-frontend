@@ -211,7 +211,7 @@
 }
 
 .cw-msg.bot p {
-  margin: var(--cw-space-xs) 0 var(--cw-space-xs) 0;
+  margin: var(--cw-space-xs) 0 var(--cw-space-sm) 0;
 }
 
 .cw-msg.bot ul,
@@ -303,12 +303,21 @@
 }
 
 /* Promociones */
+.cw-promo-container {
+  background: var(--cw-color-bg-alt);
+  border-radius: var(--cw-radius-md);
+  box-shadow: var(--cw-shadow-msg);
+  padding: var(--cw-space-lg);
+}
+
 .cw-promo {
   margin-bottom: var(--cw-space-md);
 }
 
 .cw-promo-title {
   font-weight: 600;
+  margin: var(--cw-space-sm) 0;
+  font-size: var(--cw-font-size-title);
   color: var(--cw-promo-title-color);
 }
 

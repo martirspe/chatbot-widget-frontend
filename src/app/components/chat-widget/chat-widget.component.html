@@ -51,12 +51,34 @@
       }
     </span>
   </header>
-  <main class="cw-messages" #messagesContainer tabindex="0" aria-live="polite">
+  <main class="cw-messages" #messagesContainer tabindex="0" aria-live="polite" role="log">
+    <!-- Aviso de IA -->
     <div class="cw-notice">
       Este asistente usa inteligencia artificial para responderte
     </div>
+    <!-- Hoy -->
     <div class="cw-date-sep">Hoy</div>
+    <!-- Mensajes -->
     @for (m of messages; track m) {
+    @if (m.type === 'promo' && promotions.length > 0) {
+    <section class="cw-msg bot cw-promo-container" aria-label="Promociones">
+      <p class="cw-promo-text">{{ m.text }}</p>
+      @for (promo of promotions; track promo) {
+      <article class="cw-promo" aria-label="Promoción">
+        <h3 class="cw-promo-title">{{promo.title}}</h3>
+        <p class="cw-promo-subtitle">{{promo.description}}</p>
+        @if (promo.validUntil) {
+        <p class="cw-promo-valid">Válido hasta: {{promo.validUntil}}</p>
+        }
+        @if (promo.url) {
+        <a class="cw-promo-link" [href]="promo.url" target="_blank" rel="noopener" aria-label="Ver promoción">Ver
+          promoción</a>
+        }
+      </article>
+      }
+      <span class="cw-msg-time">{{ m.time }}</span>
+    </section>
+    } @else {
     <div class="cw-msg" [ngClass]="m.role">
       @if (m.html) {
       <div [innerHTML]="m.text"></div>
@@ -66,15 +88,9 @@
       <span class="cw-msg-time">{{ m.time }}</span>
     </div>
     }
-    @if (loading) {
-    <div class="cw-msg bot">
-      <span class="cw-loader-dots" aria-label="Cargando respuesta">
-        <span></span><span></span><span></span>
-      </span>
-    </div>
     }
-
-    @if (showRating) {
+    <!-- Calificación -->
+    @if (showRating && sessionId) {
     <div class="cw-msg bot cw-rating-container">
       <div class="cw-rating-title">¿Cómo calificarías la atención recibida?</div>
       <div class="cw-stars">
@@ -93,7 +109,16 @@
       </button>
     </div>
     }
+    <!-- Cargando -->
+    @if (loading) {
+    <div class="cw-msg bot">
+      <span class="cw-loader-dots" aria-label="Cargando respuesta">
+        <span></span><span></span><span></span>
+      </span>
+    </div>
+    }
   </main>
+  <!-- Formulario -->
   <form [formGroup]="chatForm" class="cw-input" autocomplete="off" (ngSubmit)="sendMessage()">
     <input #chatInput type="text" formControlName="draft"
       [placeholder]="agentTransferCompleted ? 'Esperando agente...' : 'Envía un mensaje...'" autocomplete="off"

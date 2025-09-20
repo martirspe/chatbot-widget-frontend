@@ -2,7 +2,8 @@ export interface ChatMessage {
   role: 'user' | 'bot';
   text: string;
   html?: boolean;
-  time?: string;
+  type?: 'promo' | 'info' | 'error' | 'default';
+  time: string;
 }
 
 export interface ChatResponse {

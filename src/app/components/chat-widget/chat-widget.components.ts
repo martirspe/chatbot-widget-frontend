@@ -1,9 +1,11 @@
-import { Component, ViewChild, ElementRef, ViewEncapsulation } from '@angular/core';
-import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
+import { Component, ViewChild, ElementRef, ViewEncapsulation, OnDestroy } from '@angular/core';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { ChatService } from 'app/services/chat.service';
 import { ChatMessage } from 'app/models/chat-message.model';
 import { formatTime } from 'app/common/utils/time.utils';
+import { TimerManager } from 'app/common/utils/timer-manager';
+import { Promotion } from 'app/models/promotion.model';
 
 @Component({
   selector: 'chat-widget',
@@ -12,7 +14,7 @@ import { formatTime } from 'app/common/utils/time.utils';
   styleUrls: ['./chat-widget.component.css'],
   encapsulation: ViewEncapsulation.ShadowDom
 })
-export class ChatWidgetComponent {
+export class ChatWidgetComponent implements OnDestroy {
   @ViewChild('messagesContainer') messagesContainer!: ElementRef<HTMLDivElement>;
   @ViewChild('chatInput') chatInput!: ElementRef<HTMLInputElement>;
 
@@ -21,6 +23,7 @@ export class ChatWidgetComponent {
   isOpen = false;
   maximized = false;
   messages: ChatMessage[] = [];
+  promotions: Promotion[] = [];
   sessionId?: string;
   failedCount = 0;
   awaitingAgentKeyword = false;
@@ -29,33 +32,55 @@ export class ChatWidgetComponent {
   userRating = 0;
   userComment = '';
   stars = [1, 2, 3, 4, 5];
-  private inactivityTimer: any;
   hasInteracted = false;
   ratingSubmitted = false;
+  private timerManager = new TimerManager();
+  readonly MAX_MESSAGES = 100; // Límite de mensajes en el historial
 
   constructor(private fb: FormBuilder, private chat: ChatService) {
-    this.chatForm = this.fb.group({ draft: [''], comment: [''] });
+    // Inicializa el formulario de chat con validación
+    this.chatForm = this.fb.group({
+      draft: ['', [Validators.required, Validators.pattern(/\S+/)]],
+      comment: ['']
+    });
   }
 
+  // Abre o cierra el chat y muestra el mensaje de bienvenida
   toggleChat(): void {
     this.isOpen = !this.isOpen;
     this.messages = [];
     this.agentTransferCompleted = false;
     this.showRating = false;
+    this.ratingSubmitted = false;
     this.chatForm.get('draft')?.enable();
+
     if (this.isOpen) {
       this.loading = true;
-      setTimeout(() => {
-        this.loading = false;
-        this.addBotMessage('¡Hola! 😊 Soy <b>Lia</b>, tu asistente. ¿Cómo puedo ayudarte?', true);
-        this.focusInput();
-      }, 1200);
+      this.chat.startSession().subscribe({
+        next: r => {
+          this.sessionId = r.sessionId;
+          this.loading = false;
+          this.addBotMessage('¡Hola! 😊 Soy <b>Lia</b>, tu asistente. ¿Cómo puedo ayudarte?', true);
+          this.focusInput();
+        },
+        error: err => {
+          this.loading = false;
+          this.addBotMessage('No se pudo iniciar la sesión. Intenta de nuevo.');
+        }
+      });
     }
   }
 
+  // Alterna entre maximizar y minimizar el chat
+  toggleMaximize(): void {
+    this.maximized = !this.maximized;
+  }
+
+  // Envía el mensaje del usuario y gestiona la respuesta del bot
   sendMessage(): void {
-    const text = this.chatForm.get('draft')?.value?.trim();
-    if (!text || this.loading) return;
+    const control = this.chatForm.get('draft');
+    const text = control?.value?.trim();
+    if (!control?.valid || this.loading) return;
 
     if (this.showRating) {
       this.showRating = false;
@@ -66,137 +91,159 @@ export class ChatWidgetComponent {
     this.chatForm.reset();
     this.scrollToBottom();
 
-    // Si el usuario pide promociones
     if (/promociones|novedades/i.test(text)) {
       this.showPromotions();
       return;
     }
 
-    // Transferencia por palabra clave
     if (this.awaitingAgentKeyword && text.toLowerCase().includes('agente')) {
       this.handleTransfer();
       return;
     }
 
     this.loading = true;
-    this.chat.sendMessage(text, this.sessionId).subscribe(r => {
-      this.sessionId = r.sessionId;
-      this.loading = false;
+    this.chat.sendMessage(text, this.sessionId).subscribe({
+      next: r => {
+        this.sessionId = r.sessionId;
+        this.loading = false;
 
-      if (this.isFailedResponse(r.reply)) {
-        this.failedCount++;
-      } else {
-        this.failedCount = 0;
-      }
+        if (this.isFailedResponse(r.reply)) {
+          this.failedCount++;
+        } else {
+          this.failedCount = 0;
+        }
 
-      // Si hay 3 fallidas, vuelve a preguntar por agente humano
-      if (this.failedCount >= 3) {
-        this.awaitingAgentKeyword = true;
-        this.addBotMessage('¿Deseas hablar con un agente humano? Escribe "agente" para transferirte.');
-        this.failedCount = 0;
+        if (this.failedCount >= 3) {
+          this.awaitingAgentKeyword = true;
+          this.addBotMessage('¿Deseas hablar con un agente humano? Escribe "agente" para transferirte.');
+          this.failedCount = 0;
+          this.scrollToBottom();
+          return;
+        }
+        if (r.reply || r.message) {
+          const isHtml = /<\/?[a-z][\s\S]*>/i.test(r.reply ?? r.message ?? '');
+          this.addBotMessage(r.reply ?? r.message ?? 'No tengo información relevante para tu consulta.', isHtml);
+        }
+        this.focusInput();
         this.scrollToBottom();
-        return;
+      },
+      error: err => {
+        this.loading = false;
+        this.addBotMessage('Ocurrió un error al enviar tu mensaje. Por favor, intenta de nuevo.');
+        this.scrollToBottom();
       }
-      if (r.reply || r.message) {
-        const isHtml = /<\/?[a-z][\s\S]*>/i.test(r.reply ?? r.message ?? '');
-        this.addBotMessage(r.reply ?? r.message ?? 'No tengo información relevante para tu consulta.', isHtml);
-      }
-      this.focusInput();
-      this.scrollToBottom();
     });
     this.hasInteracted = true;
     this.resetInactivityTimer();
   }
 
-  toggleMaximize(): void {
-    this.maximized = !this.maximized;
-  }
-
-  // Obtener y mostrar promociones
+  // Solicita y muestra las promociones disponibles
   showPromotions(): void {
     this.loading = true;
-    this.chat.getPromotions().subscribe(promos => {
-      this.loading = false;
-      if (promos.length === 0) {
-        this.addBotMessage('No hay promociones disponibles en este momento.');
+    this.chat.getPromotions().subscribe({
+      next: promos => {
+        this.loading = false;
+        this.promotions = promos;
+        if (promos.length === 0) {
+          this.addBotMessage('No hay promociones disponibles en este momento.');
+        } else {
+          this.addPromoMessage('Estas son las promociones disponibles:');
+        }
         this.scrollToBottom();
-        return;
+      },
+      error: err => {
+        this.loading = false;
+        this.addBotMessage('No se pudieron cargar las promociones. Intenta más tarde.');
+        this.scrollToBottom();
       }
-      const promosHtml = promos.map(p =>
-        `<div class="cw-promo">
-          <div class="cw-promo-title">${p.title}</div>
-          <div class="cw-promo-subtitle">${p.description}</div>
-          ${p.validUntil ? `<div class="cw-promo-valid">Válido hasta: ${p.validUntil}</div>` : ''}
-          ${p.url ? `<a class="cw-promo-link" href="${p.url}" target="_blank">Ver promoción</a>` : ''}
-        </div>`
-      ).join('');
-      this.addBotMessage(promosHtml, true);
-      this.scrollToBottom();
     });
   }
 
+  // Realiza la transferencia a un agente humano
   private handleTransfer(): void {
     this.loading = true;
-    this.chat.transferToAgent(this.sessionId).subscribe(r => {
-      this.loading = false;
-      this.addBotMessage(r.message || 'Un agente humano se pondrá en contacto contigo en breve.');
-      this.failedCount = 0;
-      this.awaitingAgentKeyword = false;
-      this.agentTransferCompleted = true;
-      this.chatForm.get('draft')?.disable();
-      this.focusInput();
-      this.scrollToBottom();
-      if (!this.ratingSubmitted) {
-        setTimeout(() => {
-          this.showRating = true;
-          this.scrollToBottom();
-        }, 15000);
+    this.chat.transferToAgent(this.sessionId).subscribe({
+      next: r => {
+        this.loading = false;
+        this.addBotMessage(r.message || 'Un agente humano se pondrá en contacto contigo en breve.');
+        this.failedCount = 0;
+        this.awaitingAgentKeyword = false;
+        this.agentTransferCompleted = true;
+        this.chatForm.get('draft')?.disable();
+        this.focusInput();
+        this.scrollToBottom();
+        if (!this.ratingSubmitted) {
+          setTimeout(() => {
+            this.showRating = true;
+            this.scrollToBottom();
+          }, 15000);
+        }
+      },
+      error: err => {
+        this.loading = false;
+        this.addBotMessage('No se pudo transferir a un agente humano. Intenta más tarde.');
+        this.scrollToBottom();
       }
     });
   }
 
+  // Envía la calificación del usuario sobre la atención recibida
   submitRating(): void {
     if (!this.sessionId || this.userRating < 1) return;
     this.chat.rateChat({
       sessionId: this.sessionId,
       rating: this.userRating,
       comment: this.userComment
-    }).subscribe(res => {
-      if (res.success) {
-        this.addBotMessage('¡Gracias por tu calificación! 😊');
-        this.showRating = false;
-        this.userRating = 0;
-        this.userComment = '';
-        this.ratingSubmitted = true;
-      } else {
-        this.addBotMessage('No se pudo registrar tu calificación. Intenta de nuevo.');
+    }).subscribe({
+      next: res => {
+        if (res.success) {
+          this.addBotMessage('¡Gracias por tu calificación! 👍');
+          this.showRating = false;
+          this.userRating = 0;
+          this.userComment = '';
+          this.ratingSubmitted = true;
+        } else {
+          this.addBotMessage('No se pudo registrar tu calificación. Intenta de nuevo.');
+        }
+        this.scrollToBottom();
+      },
+      error: err => {
+        this.addBotMessage('Ocurrió un error al enviar tu calificación. Por favor, intenta de nuevo.');
+        this.scrollToBottom();
       }
-      this.scrollToBottom();
     });
   }
 
+  // Limpia los temporizadores al destruir el componente
+  ngOnDestroy(): void {
+    this.timerManager.clearAll();
+  }
+
+  // Reinicia el temporizador de inactividad para mostrar la encuesta de satisfacción
   private resetInactivityTimer(): void {
-    if (this.inactivityTimer) {
-      clearTimeout(this.inactivityTimer);
-    }
+    this.timerManager.clear('inactivity');
     if (this.hasInteracted && !this.ratingSubmitted) {
-      this.inactivityTimer = setTimeout(() => {
-        this.showRating = true;
-        this.scrollToBottom();
-      }, 90000); // 90 segundos
+      this.timerManager.set('inactivity', () => {
+        if (!this.ratingSubmitted) {
+          this.showRating = true;
+          this.scrollToBottom();
+        }
+      }, 60000);
     }
   }
 
-  // Llama a resetInactivityTimer() cada vez que agregues un mensaje
+  // Agrega el mensaje del usuario al historial y reinicia el temporizador de inactividad
   private addUserMessage(text: string): void {
     this.messages.push({
       role: 'user',
       text,
       time: formatTime(new Date().toISOString())
     });
+    this.trimMessages();
     this.resetInactivityTimer();
   }
 
+  // Agrega el mensaje del bot al historial y reinicia el temporizador de inactividad
   private addBotMessage(text: string, html = false): void {
     this.messages.push({
       role: 'bot',
@@ -204,13 +251,36 @@ export class ChatWidgetComponent {
       html,
       time: formatTime(new Date().toISOString())
     });
+    this.trimMessages();
     this.resetInactivityTimer();
   }
 
+  // Agrega un mensaje promocional al historial y reinicia el temporizador de inactividad
+  private addPromoMessage(text: string): void {
+    this.messages.push({
+      role: 'bot',
+      text,
+      type: 'promo',
+      time: formatTime(new Date().toISOString())
+    });
+    this.trimMessages();
+    this.resetInactivityTimer();
+  }
+
+  // Limita la cantidad de mensajes en el historial
+  private trimMessages(): void {
+    if (this.messages.length > this.MAX_MESSAGES) {
+      this.messages = this.messages.slice(-this.MAX_MESSAGES);
+    }
+  }
+
+  // Determina si la respuesta del bot es fallida por frases conocidas
   private isFailedResponse(reply?: string): boolean {
     if (!reply) return false;
     const failedPhrases = [
       'no tengo información',
+      'no tenemos información',
+      'no contamos con información',
       'no tengo una respuesta',
       'no he podido resolver',
       'error de conexión'
@@ -218,6 +288,7 @@ export class ChatWidgetComponent {
     return failedPhrases.some(phrase => reply.toLowerCase().includes(phrase));
   }
 
+  // Desplaza la vista al final del contenedor de mensajes
   private scrollToBottom(): void {
     setTimeout(() => {
       if (this.messagesContainer) {
@@ -227,6 +298,7 @@ export class ChatWidgetComponent {
     }, 0);
   }
 
+  // Enfoca el campo de entrada de texto del chat
   private focusInput(): void {
     setTimeout(() => {
       if (this.chatInput) {

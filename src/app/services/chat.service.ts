@@ -15,6 +15,10 @@ export class ChatService {
 
   constructor(private http: HttpClient) { }
 
+  startSession(): Observable<{ sessionId: string }> {
+    return this.http.post<{ sessionId: string }>(`${this.base}/api/chat/start-session`, {});
+  }
+
   sendMessage(text: string, sessionId?: string): Observable<ChatResponse> {
     return this.http.post<ChatResponse>(`${this.base}/api/chat/message`, { text, sessionId })
       .pipe(
