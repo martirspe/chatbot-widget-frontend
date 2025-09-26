@@ -19,17 +19,17 @@ export class ChatService {
     return this.http.post<{ sessionId: string }>(`${this.base}/api/chat/start-session`, {});
   }
 
-  sendMessage(text: string, sessionId?: string): Observable<ChatResponse> {
-    return this.http.post<ChatResponse>(`${this.base}/api/chat/message`, { text, sessionId })
+  sendMessage(message: string, sessionId?: string): Observable<ChatResponse> {
+    return this.http.post<ChatResponse>(`${this.base}/api/chat/message`, { message, sessionId })
       .pipe(
-        catchError(() => of({ reply: 'Error de conexión con el servidor.' }))
+        catchError(() => of({ response: 'Error de conexión con el servidor.' }))
       );
   }
 
   transferToAgent(sessionId?: string): Observable<ChatResponse> {
     return this.http.post<ChatResponse>(`${this.base}/api/chat/transfer`, { sessionId })
       .pipe(
-        catchError(() => of({ message: 'No se pudo contactar al agente humano.' }))
+        catchError(() => of({ response: 'No se pudo contactar al agente humano.' }))
       );
   }
 

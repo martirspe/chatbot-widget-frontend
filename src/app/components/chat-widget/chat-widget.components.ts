@@ -60,7 +60,7 @@ export class ChatWidgetComponent implements OnDestroy {
         next: r => {
           this.sessionId = r.sessionId;
           this.loading = false;
-          this.addBotMessage('¡Hola! 😊 Soy <b>Lia</b>, tu asistente. ¿Cómo puedo ayudarte?', true);
+          this.addBotMessage('¡Hola! 😊 Soy <b>Lia</b>, experta en ventas con IA de MARRSO. ¿En qué puedo ayudarte?', true);
           this.focusInput();
         },
         error: err => {
@@ -79,7 +79,7 @@ export class ChatWidgetComponent implements OnDestroy {
   // Envía el mensaje del usuario y gestiona la respuesta del bot
   sendMessage(): void {
     const control = this.chatForm.get('draft');
-    const text = control?.value?.trim();
+    const message = control?.value?.trim();
     if (!control?.valid || this.loading) return;
 
     if (this.showRating) {
@@ -87,27 +87,27 @@ export class ChatWidgetComponent implements OnDestroy {
       this.resetInactivityTimer();
     }
 
-    this.addUserMessage(text);
+    this.addUserMessage(message);
     this.chatForm.reset();
     this.scrollToBottom();
 
-    if (/promociones|novedades/i.test(text)) {
+    if (/promociones|novedades/i.test(message)) {
       this.showPromotions();
       return;
     }
 
-    if (this.awaitingAgentKeyword && text.toLowerCase().includes('agente')) {
+    if (this.awaitingAgentKeyword && message.toLowerCase().includes('agente')) {
       this.handleTransfer();
       return;
     }
 
     this.loading = true;
-    this.chat.sendMessage(text, this.sessionId).subscribe({
+    this.chat.sendMessage(message, this.sessionId).subscribe({
       next: r => {
         this.sessionId = r.sessionId;
         this.loading = false;
 
-        if (this.isFailedResponse(r.reply)) {
+        if (this.isFailedResponse(r.response)) {
           this.failedCount++;
         } else {
           this.failedCount = 0;
@@ -120,9 +120,9 @@ export class ChatWidgetComponent implements OnDestroy {
           this.scrollToBottom();
           return;
         }
-        if (r.reply || r.message) {
-          const isHtml = /<\/?[a-z][\s\S]*>/i.test(r.reply ?? r.message ?? '');
-          this.addBotMessage(r.reply ?? r.message ?? 'No tengo información relevante para tu consulta.', isHtml);
+        if (r.response) {
+          const isHtml = /<\/?[a-z][\s\S]*>/i.test(r.response ?? '');
+          this.addBotMessage(r.response ?? 'No tengo información relevante para tu consulta.', isHtml);
         }
         this.focusInput();
         this.scrollToBottom();
@@ -165,7 +165,7 @@ export class ChatWidgetComponent implements OnDestroy {
     this.chat.transferToAgent(this.sessionId).subscribe({
       next: r => {
         this.loading = false;
-        this.addBotMessage(r.message || 'Un agente humano se pondrá en contacto contigo en breve.');
+        this.addBotMessage(r.response || 'Un agente humano se pondrá en contacto contigo en breve.');
         this.failedCount = 0;
         this.awaitingAgentKeyword = false;
         this.agentTransferCompleted = true;
@@ -197,7 +197,7 @@ export class ChatWidgetComponent implements OnDestroy {
     }).subscribe({
       next: res => {
         if (res.success) {
-          this.addBotMessage('¡Gracias por tu calificación! 👍');
+          this.addBotMessage('¡Gracias por calificarme! 👍');
           this.showRating = false;
           this.userRating = 0;
           this.userComment = '';
@@ -233,10 +233,10 @@ export class ChatWidgetComponent implements OnDestroy {
   }
 
   // Agrega el mensaje del usuario al historial y reinicia el temporizador de inactividad
-  private addUserMessage(text: string): void {
+  private addUserMessage(message: string): void {
     this.messages.push({
       role: 'user',
-      text,
+      message,
       time: formatTime(new Date().toISOString())
     });
     this.trimMessages();
@@ -244,10 +244,10 @@ export class ChatWidgetComponent implements OnDestroy {
   }
 
   // Agrega el mensaje del bot al historial y reinicia el temporizador de inactividad
-  private addBotMessage(text: string, html = false): void {
+  private addBotMessage(message: string, html = false): void {
     this.messages.push({
       role: 'bot',
-      text,
+      message,
       html,
       time: formatTime(new Date().toISOString())
     });
@@ -256,10 +256,10 @@ export class ChatWidgetComponent implements OnDestroy {
   }
 
   // Agrega un mensaje promocional al historial y reinicia el temporizador de inactividad
-  private addPromoMessage(text: string): void {
+  private addPromoMessage(message: string): void {
     this.messages.push({
       role: 'bot',
-      text,
+      message,
       type: 'promo',
       time: formatTime(new Date().toISOString())
     });
@@ -275,8 +275,8 @@ export class ChatWidgetComponent implements OnDestroy {
   }
 
   // Determina si la respuesta del bot es fallida por frases conocidas
-  private isFailedResponse(reply?: string): boolean {
-    if (!reply) return false;
+  private isFailedResponse(response?: string): boolean {
+    if (!response) return false;
     const failedPhrases = [
       'no tengo información',
       'no tenemos información',
@@ -285,7 +285,7 @@ export class ChatWidgetComponent implements OnDestroy {
       'no he podido resolver',
       'error de conexión'
     ];
-    return failedPhrases.some(phrase => reply.toLowerCase().includes(phrase));
+    return failedPhrases.some(phrase => response.toLowerCase().includes(phrase));
   }
 
   // Desplaza la vista al final del contenedor de mensajes

@@ -1,6 +1,6 @@
 export interface ChatMessage {
   role: 'user' | 'bot';
-  text: string;
+  message: string;
   html?: boolean;
   type?: 'promo' | 'info' | 'error' | 'default';
   time: string;
@@ -8,8 +8,6 @@ export interface ChatMessage {
 
 export interface ChatResponse {
   sessionId?: string;
-  reply?: string;
-  message?: string;
+  response?: string;
   documents?: any[];
-  result?: any[];
 }

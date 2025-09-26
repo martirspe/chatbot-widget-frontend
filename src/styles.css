@@ -11,8 +11,6 @@
   --cw-color-border: #e5e7eb;
 
   /* Colores secundarios y estados */
-  --cw-color-notice-bg: #fff2c4;
-  --cw-color-notice-text: #222;
   --cw-color-date-bg: #e5e5e5;
   --cw-color-message-text: #222;
   --cw-color-date-text: #737373;
@@ -57,7 +55,6 @@
   --cw-shadow-input: 0 1px 2px rgba(0, 0, 0, 0.07);
   --cw-shadow-msg: 0 1px 2px rgba(0, 0, 0, 0.07);
   --cw-shadow-date: 0 1px 2px rgba(0, 0, 0, 0.07);
-  --cw-shadow-notice: 0 1px 2px rgba(0, 0, 0, 0.07);
 
   /* Widget */
   --cw-widget-width: 290px;
@@ -82,8 +79,6 @@
   --cw-star-icon-size: 20px;
   --cw-loader-dot-size: 8px;
   --cw-loader-dot-height: 32px;
-  --cw-date-sep-width: 50px;
-  --cw-date-sep-height: 25px;
 
   /* Promociones */
   --cw-promo-title-color: #222;

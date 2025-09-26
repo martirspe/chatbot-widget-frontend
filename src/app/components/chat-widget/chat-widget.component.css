@@ -53,7 +53,7 @@
   bottom: var(--cw-space-xl);
   width: var(--cw-widget-width);
   height: var(--cw-widget-height);
-  border-radius: var(--cw-radius-lg);
+  border-radius: var(--cw-radius-md);
   box-shadow: var(--cw-shadow-widget);
   display: flex;
   flex-direction: column;
@@ -156,18 +156,6 @@
   height: var(--cw-avatar-size);
   object-fit: cover;
   display: block;
-}
-
-/* Notice */
-.cw-notice {
-  background: var(--cw-color-notice-bg);
-  color: var(--cw-color-notice-text);
-  padding: var(--cw-space-sm);
-  border-radius: var(--cw-radius-md);
-  margin: var(--cw-space-sm);
-  font-size: var(--cw-font-size-small);
-  box-shadow: var(--cw-shadow-notice);
-  text-align: center;
 }
 
 /* Messages */
@@ -285,21 +273,6 @@
   text-align: right;
   margin-top: var(--cw-space-xs);
   opacity: 0.7;
-}
-
-/* Date Separator */
-.cw-date-sep {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: var(--cw-space-xs) var(--cw-space-lg);
-  margin: var(--cw-space-sm) auto;
-  font-size: var(--cw-font-size-small);
-  color: var(--cw-color-date-text);
-  font-weight: 500;
-  background: var(--cw-color-date-bg);
-  border-radius: var(--cw-radius-sm);
-  box-shadow: var(--cw-shadow-date);
 }
 
 /* Promociones */
