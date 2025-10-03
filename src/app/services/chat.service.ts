@@ -40,10 +40,10 @@ export class ChatService {
       );
   }
 
-  rateChat(rating: ChatRating): Observable<{ success: boolean }> {
-    return this.http.post<{ success: boolean }>(`${this.base}/api/chat/rate`, rating)
+  rateChat(rating: ChatRating): Observable<{ status: string; response: string }> {
+    return this.http.post<{ status: string; response: string }>(`${this.base}/api/chat/rate`, rating)
       .pipe(
-        catchError(() => of({ success: false }))
+        catchError(() => of({ status: 'error', response: 'No se pudo guardar la calificación.' }))
       );
   }
 }

@@ -196,7 +196,7 @@ export class ChatWidgetComponent implements OnDestroy {
       comment: this.userComment
     }).subscribe({
       next: res => {
-        if (res.success) {
+        if (res.status === 'success') {
           this.addBotMessage('¡Gracias por calificarme! 👍');
           this.showRating = false;
           this.userRating = 0;
