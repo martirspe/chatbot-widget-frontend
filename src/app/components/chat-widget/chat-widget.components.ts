@@ -1,4 +1,4 @@
-import { Component, ViewChild, ElementRef, ViewEncapsulation, OnDestroy } from '@angular/core';
+import { Component, ViewChild, ElementRef, ViewEncapsulation, OnDestroy, HostListener } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { ChatService } from 'app/services/chat.service';
@@ -28,6 +28,7 @@ export class ChatWidgetComponent implements OnDestroy {
   failedCount = 0;
   awaitingAgentKeyword = false;
   agentTransferCompleted = false;
+  agentTransferRequested = false;
   showRating = false;
   userRating = 0;
   userComment = '';
@@ -35,6 +36,8 @@ export class ChatWidgetComponent implements OnDestroy {
   hasInteracted = false;
   ratingSubmitted = false;
   private timerManager = new TimerManager();
+  private sessionClosing = false;
+  private transferEventSource?: EventSource | null;
   readonly MAX_MESSAGES = 100; // Límite de mensajes en el historial
 
   constructor(private fb: FormBuilder, private chat: ChatService) {
@@ -47,27 +50,27 @@ export class ChatWidgetComponent implements OnDestroy {
 
   // Abre o cierra el chat y muestra el mensaje de bienvenida
   toggleChat(): void {
+    const wasOpen = this.isOpen;
     this.isOpen = !this.isOpen;
-    this.messages = [];
-    this.agentTransferCompleted = false;
-    this.showRating = false;
-    this.ratingSubmitted = false;
-    this.chatForm.get('draft')?.enable();
 
+    // Al cerrar/minimizar, destruir sesión
+    if (!this.isOpen && wasOpen) {
+      this.destroySession();
+      this.messages = [];
+      this.agentTransferCompleted = false;
+      this.agentTransferRequested = false;
+      this.showRating = false;
+      this.ratingSubmitted = false;
+      this.timerManager.clear('transfer-status-poll');
+      if (this.transferEventSource) { this.transferEventSource.close(); this.transferEventSource = null; }
+      this.chatForm.get('draft')?.enable();
+      return;
+    }
+
+    // Al abrir, sólo saludar (no crear sesión aún)
     if (this.isOpen) {
-      this.loading = true;
-      this.chat.startSession().subscribe({
-        next: r => {
-          this.sessionId = r.sessionId;
-          this.loading = false;
-          this.addBotMessage('¡Hola! 😊 Soy <b>Lia</b>, experta en ventas con IA de MARRSO. ¿En qué puedo ayudarte?', true);
-          this.focusInput();
-        },
-        error: err => {
-          this.loading = false;
-          this.addBotMessage('No se pudo iniciar la sesión. Intenta de nuevo.');
-        }
-      });
+      this.addBotMessage('¡Hola! 😊 Soy <b>Lia</b>, experta en ventas con IA de MARRSO. ¿En qué puedo ayudarte?', true);
+      this.focusInput();
     }
   }
 
@@ -81,6 +84,17 @@ export class ChatWidgetComponent implements OnDestroy {
     const control = this.chatForm.get('draft');
     const message = control?.value?.trim();
     if (!control?.valid || this.loading) return;
+
+    // Detección temprana de intención de hablar con un agente
+    if (this.detectTransferIntent(message)) {
+      // Mostrar y registrar el mensaje del usuario
+      this.addUserMessage(message);
+      this.scrollToBottom();
+      // Transferir incluyendo el texto del usuario para persistirlo en la sesión
+      this.handleTransfer(message);
+      this.chatForm.reset();
+      return;
+    }
 
     if (this.showRating) {
       this.showRating = false;
@@ -96,12 +110,31 @@ export class ChatWidgetComponent implements OnDestroy {
       return;
     }
 
-    if (this.awaitingAgentKeyword && message.toLowerCase().includes('agente')) {
-      this.handleTransfer();
-      return;
-    }
+    if (this.awaitingAgentKeyword && this.detectTransferIntent(message)) { this.addUserMessage(message); this.handleTransfer(message); return; }
 
-    this.loading = true;
+    // Crear sesión sólo si no existe aún, luego enviar
+    if (!this.sessionId) {
+      this.loading = true;
+      this.chat.startSession().subscribe({
+        next: r => {
+          this.sessionId = r.sessionId;
+          this.sendMessageWithSession(message);
+        },
+        error: () => {
+          this.loading = false;
+          this.addBotMessage('No se pudo iniciar la sesión. Intenta de nuevo.');
+          this.scrollToBottom();
+        }
+      });
+    } else {
+      this.loading = true;
+      this.sendMessageWithSession(message);
+    }
+    this.hasInteracted = true;
+    this.resetInactivityTimer();
+  }
+
+  private sendMessageWithSession(message: string): void {
     this.chat.sendMessage(message, this.sessionId).subscribe({
       next: r => {
         this.sessionId = r.sessionId;
@@ -113,7 +146,7 @@ export class ChatWidgetComponent implements OnDestroy {
           this.failedCount = 0;
         }
 
-        if (this.failedCount >= 3) {
+        if (this.failedCount >= 1) {
           this.awaitingAgentKeyword = true;
           this.addBotMessage('¿Deseas hablar con un agente humano? Escribe "agente" para transferirte.');
           this.failedCount = 0;
@@ -133,8 +166,6 @@ export class ChatWidgetComponent implements OnDestroy {
         this.scrollToBottom();
       }
     });
-    this.hasInteracted = true;
-    this.resetInactivityTimer();
   }
 
   // Solicita y muestra las promociones disponibles
@@ -160,23 +191,35 @@ export class ChatWidgetComponent implements OnDestroy {
   }
 
   // Realiza la transferencia a un agente humano
-  private handleTransfer(): void {
+  private handleTransfer(userMessage?: string): void {
+    if (this.agentTransferCompleted || this.agentTransferRequested) {
+      this.addBotMessage('Tu solicitud de transferencia ya está en curso.');
+      this.scrollToBottom();
+      return;
+    }
     this.loading = true;
-    this.chat.transferToAgent(this.sessionId).subscribe({
+    this.chat.transferToAgent(this.sessionId, userMessage).subscribe({
       next: r => {
         this.loading = false;
-        this.addBotMessage(r.response || 'Un agente humano se pondrá en contacto contigo en breve.');
+        if (r.sessionId) {
+          this.sessionId = r.sessionId;
+        }
+        this.addBotMessage(r.response || (r as any).message || 'Un agente humano se pondrá en contacto contigo en breve.');
         this.failedCount = 0;
         this.awaitingAgentKeyword = false;
+        this.agentTransferRequested = true;
         this.agentTransferCompleted = true;
         this.chatForm.get('draft')?.disable();
         this.focusInput();
         this.scrollToBottom();
+        if (!this.startTransferStatusSse()) {
+          this.startTransferStatusPolling();
+        }
         if (!this.ratingSubmitted) {
           setTimeout(() => {
             this.showRating = true;
             this.scrollToBottom();
-          }, 15000);
+          }, 3000);
         }
       },
       error: err => {
@@ -185,6 +228,60 @@ export class ChatWidgetComponent implements OnDestroy {
         this.scrollToBottom();
       }
     });
+  }
+
+  private startTransferStatusSse(): boolean {
+    if (!this.sessionId) return false;
+    const es = this.chat.openTransferStream(this.sessionId);
+    if (!es) return false;
+    this.transferEventSource = es;
+    es.onmessage = (evt: MessageEvent) => {
+      try {
+        const data = typeof evt.data === 'string' ? JSON.parse(evt.data) : evt.data;
+        const status = data?.status as string;
+        if (status === 'assigned') {
+          this.addBotMessage('Un agente humano se ha conectado a tu conversación.');
+          this.scrollToBottom();
+        } else if (status === 'completed') {
+          this.addBotMessage('La transferencia a agente ha finalizado. Gracias por tu paciencia.');
+          this.scrollToBottom();
+          es.close();
+          this.transferEventSource = null;
+        }
+      } catch { /* noop */ }
+    };
+    es.onerror = () => {
+      // En caso de error, cerrar y permitir fallback a polling
+      try { es.close(); } catch { /* noop */ }
+      this.transferEventSource = null;
+    };
+    return true;
+  }
+
+  private startTransferStatusPolling(): void {
+    this.timerManager.clear('transfer-status-poll');
+    const poll = () => {
+      if (!this.sessionId) return;
+      this.chat.getTransferStatus(this.sessionId).subscribe(res => {
+        const status = res.status;
+        if (status === 'assigned') {
+          this.addBotMessage('Un agente humano se ha conectado a tu conversación.');
+          this.scrollToBottom();
+          // Mantener el polling por si luego hay un "completed"
+          this.timerManager.set('transfer-status-poll', poll, 5000);
+        } else if (status === 'completed') {
+          this.addBotMessage('La transferencia a agente ha finalizado. Gracias por tu paciencia.');
+          this.scrollToBottom();
+          this.timerManager.clear('transfer-status-poll');
+        } else {
+          // requested/none -> seguir consultando
+          this.timerManager.set('transfer-status-poll', poll, 5000);
+        }
+      }, _ => {
+        this.timerManager.set('transfer-status-poll', poll, 7000);
+      });
+    };
+    this.timerManager.set('transfer-status-poll', poll, 5000);
   }
 
   // Envía la calificación del usuario sobre la atención recibida
@@ -217,6 +314,8 @@ export class ChatWidgetComponent implements OnDestroy {
   // Limpia los temporizadores al destruir el componente
   ngOnDestroy(): void {
     this.timerManager.clearAll();
+    // Intentar cerrar sesión al destruir el componente
+    this.signalEndSession();
   }
 
   // Reinicia el temporizador de inactividad para mostrar la encuesta de satisfacción
@@ -228,7 +327,7 @@ export class ChatWidgetComponent implements OnDestroy {
           this.showRating = true;
           this.scrollToBottom();
         }
-      }, 60000);
+      }, 18000);
     }
   }
 
@@ -288,6 +387,22 @@ export class ChatWidgetComponent implements OnDestroy {
     return failedPhrases.some(phrase => response.toLowerCase().includes(phrase));
   }
 
+  private detectTransferIntent(text: string): boolean {
+    const t = (text || '').toLowerCase();
+    const patterns = [
+      'agente', 'asesor', 'humano', 'representante', 'soporte', 'atención',
+      'hablar con (un )?humano', 'hablar con (un )?asesor', 'quiero un humano'
+    ];
+    return patterns.some(p => {
+      try {
+        const re = new RegExp(p);
+        return re.test(t);
+      } catch {
+        return t.includes(p);
+      }
+    });
+  }
+
   // Desplaza la vista al final del contenedor de mensajes
   private scrollToBottom(): void {
     setTimeout(() => {
@@ -305,6 +420,43 @@ export class ChatWidgetComponent implements OnDestroy {
         this.chatInput.nativeElement.focus();
       }
     }, 0);
+  }
+
+  // Cierra la sesión actual (HTTP) y limpia estado local
+  private destroySession(): void {
+    if (!this.sessionId) return;
+    const sid = this.sessionId;
+    this.chat.endSession(sid).subscribe({
+      next: () => { /* no-op */ },
+      error: () => { /* silencioso */ }
+    });
+    this.sessionId = undefined;
+  }
+
+  // Al refrescar o cerrar la página, intenta cerrar sesión vía Beacon
+  @HostListener('window:beforeunload')
+  onBeforeUnload(): void {
+    this.signalEndSession();
+  }
+
+  // Dispara cierre en ocultar página (más fiable en móviles y Safari)
+  @HostListener('window:pagehide')
+  onPageHide(): void {
+    this.signalEndSession();
+  }
+
+  // Dispara cierre cuando el documento se vuelve oculto
+  @HostListener('document:visibilitychange')
+  onVisibilityChange(): void {
+    if (document.visibilityState === 'hidden') {
+      this.signalEndSession();
+    }
+  }
+
+  private signalEndSession(): void {
+    if (!this.sessionId || this.sessionClosing) return;
+    this.sessionClosing = true;
+    this.chat.endSessionBeacon(this.sessionId);
   }
 }
 
